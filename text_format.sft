@@ -1,3 +1,4 @@
 [player.position] 69 30 50
+[player.yay]
 [player.name] "hello!"
 [player.is_alive] false

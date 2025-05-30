@@ -17,6 +17,8 @@ pub enum Value<'a> {
     Vec3(Vec3),
 
     Vec(Vec<f32>),
+
+    None,
 }
 
 
@@ -72,6 +74,7 @@ pub fn slice_to_string(keys: &[(&str, Value)]) -> String {
             Value::Bool(b) => writeln!(string, "{b}"),
             Value::Vec2(v) => writeln!(string, "{} {}", v.x, v.y),
             Value::Vec3(v) => writeln!(string, "{} {} {}", v.x, v.y, v.z),
+            Value::None => writeln!(string, "none"),
             Value::Vec(items) => {
                 for item in items {
                     let _ = write!(string, "{item} ");
@@ -99,6 +102,7 @@ pub fn hashmap_to_string(keys: HashMap<&str, Value>) -> String {
             Value::Bool(b) => writeln!(string, "{b}"),
             Value::Vec2(v) => writeln!(string, "{} {}", v.x, v.y),
             Value::Vec3(v) => writeln!(string, "{} {} {}", v.x, v.y, v.z),
+            Value::None => writeln!(string, "none"),
             Value::Vec(items) => {
                 for item in items {
                     let _ = write!(string, "{item} ");
@@ -163,6 +167,9 @@ fn value<'me>(reader: &mut Reader<'me, u8>) -> Result<Value<'me>, Error> {
             Value::Bool(false)
         }
 
+
+
+        '\n' => Value::None,
         ' ' => value(reader)?,
 
         _ => return Err(Error::InvalidCharacter(reader.offset()))

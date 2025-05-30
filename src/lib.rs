@@ -59,7 +59,35 @@ pub fn parse_str<'me>(str: &'me str) -> Result<HashMap<&'me str, Value<'me>>, Er
 }
 
 
-pub fn to_string(keys: HashMap<&str, Value>) -> String {
+
+pub fn slice_to_string(keys: &[(&str, Value)]) -> String {
+    let mut string = String::new();
+
+    for (k, v) in keys.iter() {
+        let _ = write!(string, "[{k}] ");
+
+        let _ = match v {
+            Value::String(s) => writeln!(string, "\"{s}\""),
+            Value::Num(n) => writeln!(string, "{n}"),
+            Value::Bool(b) => writeln!(string, "{b}"),
+            Value::Vec2(v) => writeln!(string, "{} {}", v.x, v.y),
+            Value::Vec3(v) => writeln!(string, "{} {} {}", v.x, v.y, v.z),
+            Value::Vec(items) => {
+                for item in items {
+                    let _ = write!(string, "{item} ");
+                }
+
+                writeln!(string)
+            },
+        };
+    }
+
+    string
+}
+
+
+
+pub fn hashmap_to_string(keys: HashMap<&str, Value>) -> String {
     let mut string = String::new();
 
     for (k, v) in keys.iter() {

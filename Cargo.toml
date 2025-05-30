@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 sti = { git = "https://github.com/leddoo/sti" }
+glam = "*"

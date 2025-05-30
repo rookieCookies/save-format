@@ -2,20 +2,21 @@ pub mod byte;
 
 use std::{collections::HashMap, fmt::Write};
 
+use glam::{Vec2, Vec3};
 use sti::reader::Reader;
 
 #[derive(Debug)]
 pub enum Value<'a> {
     String(&'a str),
 
-    Num(f64),
+    Num(f32),
     Bool(bool),
 
-    Vec2(f64, f64),
+    Vec2(Vec2),
 
-    Vec3(f64, f64, f64),
+    Vec3(Vec3),
 
-    Vec(Vec<f64>),
+    Vec(Vec<f32>),
 }
 
 
@@ -68,8 +69,8 @@ pub fn to_string(keys: HashMap<&str, Value>) -> String {
             Value::String(s) => writeln!(string, "\"{s}\""),
             Value::Num(n) => writeln!(string, "{n}"),
             Value::Bool(b) => writeln!(string, "{b}"),
-            Value::Vec2(n1, n2) => writeln!(string, "{n1} {n2}"),
-            Value::Vec3(n1, n2, n3) => writeln!(string, "{n1} {n2} {n3}"),
+            Value::Vec2(v) => writeln!(string, "{} {}", v.x, v.y),
+            Value::Vec3(v) => writeln!(string, "{} {} {}", v.x, v.y, v.z),
             Value::Vec(items) => {
                 for item in items {
                     let _ = write!(string, "{item} ");
@@ -101,8 +102,8 @@ fn value<'me>(reader: &mut Reader<'me, u8>) -> Result<Value<'me>, Error> {
             match nums.len() {
                 0 => unreachable!(),
                 1 => Value::Num(nums[0]),
-                2 => Value::Vec2(nums[0], nums[1]),
-                3 => Value::Vec3(nums[0], nums[1], nums[2]),
+                2 => Value::Vec2(Vec2::new(nums[0], nums[1])),
+                3 => Value::Vec3(Vec3::new(nums[0], nums[1], nums[2])),
                 _ => Value::Vec(nums),
             }
         }
@@ -141,11 +142,11 @@ fn value<'me>(reader: &mut Reader<'me, u8>) -> Result<Value<'me>, Error> {
 }
 
 
-fn number<'me>(reader: &mut Reader<u8>) -> f64 {
+fn number<'me>(reader: &mut Reader<u8>) -> f32 {
     let (num, _) = reader.consume_while_slice(|&c| (c as char).is_numeric() || c == b'.');
     let num = str::from_utf8(num).unwrap();
     dbg!(&reader, num);
-    let num : f64 = num.parse().unwrap();
+    let num : f32 = num.parse().unwrap();
     reader.next_if(|&f| f == b' ');
 
     num

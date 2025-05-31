@@ -72,8 +72,8 @@ pub fn parse_str<'me>(arena: &'me Arena, str: &'me str) -> Result<HashMap<&'me s
     while let Some(chr) = reader.next() {
         match chr as char {
             '[' => {
-                let key = reader.consume_while_slice(|&c| c != b']');
-                if reader.next() != Some(b']') {
+                let key = reader.consume_while_slice(|&c| c != b' ');
+                if key.0.last() != Some(&b']') {
                     return Err(Error::UnfinishedKey(reader.offset()))
                 }
 
@@ -153,7 +153,7 @@ pub fn hashmap_to_string(keys: HashMap<&str, Value>) -> String {
 
 
 fn value<'me>(arena: &'me Arena, reader: &mut Reader<'me, u8>) -> Result<Value<'me>, Error> {
-    let Some(chr) = reader.next()
+    let Some(chr) = reader.peek()
     else { return Err(Error::UnfinishedKey(reader.offset())) };
 
 
@@ -162,9 +162,12 @@ fn value<'me>(arena: &'me Arena, reader: &mut Reader<'me, u8>) -> Result<Value<'
             let mut nums = sti::vec::Vec::new_in(arena);
             while reader.peek().is_some() && reader.peek() != Some(b'\n') {
                 let num = number(reader);
-                nums.push(num);
+                if nums.is_empty() && chr == b'-' {
+                    nums.push(-num);
+                } else {
+                    nums.push(num);
+                }
             }
-
 
             match nums.len() {
                 0 => unreachable!(),
@@ -177,10 +180,12 @@ fn value<'me>(arena: &'me Arena, reader: &mut Reader<'me, u8>) -> Result<Value<'
 
 
         '"' => {
+            let _ = reader.next();
             let str = reader.consume_while_slice(|&c| c != b'"');
             if reader.next() != Some(b'"') {
                 return Err(Error::UnfinishedKey(reader.offset()))
             }
+            dbg!(str);
 
             Value::String(str::from_utf8(str.0).unwrap())
 
@@ -188,6 +193,7 @@ fn value<'me>(arena: &'me Arena, reader: &mut Reader<'me, u8>) -> Result<Value<'
 
 
         't' => {
+            assert_eq!(reader.next(), Some(b't'));
             assert_eq!(reader.next(), Some(b'r'));
             assert_eq!(reader.next(), Some(b'u'));
             assert_eq!(reader.next(), Some(b'e'));
@@ -195,6 +201,7 @@ fn value<'me>(arena: &'me Arena, reader: &mut Reader<'me, u8>) -> Result<Value<'
         }
 
         'f' => {
+            assert_eq!(reader.next(), Some(b'f'));
             assert_eq!(reader.next(), Some(b'a'));
             assert_eq!(reader.next(), Some(b'l'));
             assert_eq!(reader.next(), Some(b's'));
@@ -205,9 +212,15 @@ fn value<'me>(arena: &'me Arena, reader: &mut Reader<'me, u8>) -> Result<Value<'
 
 
         '\n' => Value::None,
-        ' ' => value(arena, reader)?,
+        ' ' => {
+            let _ = reader.next();
+            value(arena, reader)?
+        },
 
-        _ => return Err(Error::InvalidCharacter(reader.offset()))
+        _ => {
+            println!("invalid character {}", chr as char);
+            return Err(Error::InvalidCharacter(reader.offset()))
+        }
     })
 }
 
@@ -219,7 +232,6 @@ fn number<'me>(reader: &mut Reader<u8>) -> f32 {
     } else { false };
     let (num, _) = reader.consume_while_slice(|&c| (c as char).is_numeric() || c == b'.');
     let num = str::from_utf8(num).unwrap();
-    dbg!(&reader, num);
     let num : f32 = num.parse().unwrap();
     reader.next_if(|&f| f == b' ');
 

@@ -3,9 +3,9 @@ pub mod byte;
 use std::{collections::HashMap, fmt::Write};
 
 use glam::{Vec2, Vec3};
-use sti::reader::Reader;
+use sti::{arena::Arena, reader::Reader};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Value<'a> {
     String(&'a str),
 
@@ -16,7 +16,7 @@ pub enum Value<'a> {
 
     Vec3(Vec3),
 
-    Vec(Vec<f32>),
+    Vec(&'a [f32]),
 
     None,
 }
@@ -30,7 +30,7 @@ pub enum Error {
 }
 
 
-pub fn parse_str<'me>(str: &'me str) -> Result<HashMap<&'me str, Value<'me>>, Error> {
+pub fn parse_str<'me>(arena: &'me Arena, str: &'me str) -> Result<HashMap<&'me str, Value<'me>>, Error> {
     let mut pairs = HashMap::new();
     let mut reader = Reader::new(str.as_bytes());
 
@@ -43,7 +43,7 @@ pub fn parse_str<'me>(str: &'me str) -> Result<HashMap<&'me str, Value<'me>>, Er
                 }
 
                 let key = str::from_utf8(key.0).unwrap();
-                let val = value(&mut reader)?;
+                let val = value(arena, &mut reader)?;
 
                 pairs.insert(key, val);
             }
@@ -76,7 +76,7 @@ pub fn slice_to_string(keys: &[(&str, Value)]) -> String {
             Value::Vec3(v) => writeln!(string, "{} {} {}", v.x, v.y, v.z),
             Value::None => writeln!(string),
             Value::Vec(items) => {
-                for item in items {
+                for item in items.iter() {
                     let _ = write!(string, "{item} ");
                 }
 
@@ -104,7 +104,7 @@ pub fn hashmap_to_string(keys: HashMap<&str, Value>) -> String {
             Value::Vec3(v) => writeln!(string, "{} {} {}", v.x, v.y, v.z),
             Value::None => writeln!(string),
             Value::Vec(items) => {
-                for item in items {
+                for item in items.iter() {
                     let _ = write!(string, "{item} ");
                 }
 
@@ -117,14 +117,14 @@ pub fn hashmap_to_string(keys: HashMap<&str, Value>) -> String {
 }
 
 
-fn value<'me>(reader: &mut Reader<'me, u8>) -> Result<Value<'me>, Error> {
+fn value<'me>(arena: &'me Arena, reader: &mut Reader<'me, u8>) -> Result<Value<'me>, Error> {
     let Some(chr) = reader.next()
     else { return Err(Error::UnfinishedKey(reader.offset())) };
 
 
     Ok(match chr as char {
         '0'..='9' => {
-            let mut nums = vec![];
+            let mut nums = sti::vec::Vec::new_in(arena);
             while reader.peek().is_some() && reader.peek() != Some(b'\n') {
                 let num = number(reader);
                 nums.push(num);
@@ -136,7 +136,7 @@ fn value<'me>(reader: &mut Reader<'me, u8>) -> Result<Value<'me>, Error> {
                 1 => Value::Num(nums[0]),
                 2 => Value::Vec2(Vec2::new(nums[0], nums[1])),
                 3 => Value::Vec3(Vec3::new(nums[0], nums[1], nums[2])),
-                _ => Value::Vec(nums),
+                _ => Value::Vec(nums.leak()),
             }
         }
 
@@ -170,7 +170,7 @@ fn value<'me>(reader: &mut Reader<'me, u8>) -> Result<Value<'me>, Error> {
 
 
         '\n' => Value::None,
-        ' ' => value(reader)?,
+        ' ' => value(arena, reader)?,
 
         _ => return Err(Error::InvalidCharacter(reader.offset()))
     })

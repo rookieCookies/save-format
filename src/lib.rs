@@ -30,6 +30,39 @@ pub enum Error {
 }
 
 
+impl<'a> Value<'a> {
+    pub fn as_str(self) -> &'a str {
+        let Value::String(val) = self
+        else { unreachable!() };
+        val
+    }
+
+    pub fn as_num(self) -> f32 {
+        let Value::Num(val) = self
+        else { unreachable!() };
+        val
+    }
+
+    pub fn as_vec2(self) -> Vec2 {
+        let Value::Vec2(val) = self
+        else { unreachable!() };
+        val
+    }
+
+    pub fn as_vec3(self) -> Vec3 {
+        let Value::Vec3(val) = self
+        else { unreachable!() };
+        val
+    }
+
+    pub fn as_vec(self) -> &'a [f32] {
+        let Value::Vec(val) = self
+        else { unreachable!() };
+        val
+    }
+}
+
+
 pub fn parse_str<'me>(arena: &'me Arena, str: &'me str) -> Result<HashMap<&'me str, Value<'me>>, Error> {
     let mut pairs = HashMap::new();
     let mut reader = Reader::new(str.as_bytes());

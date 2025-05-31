@@ -51,7 +51,7 @@ impl<'a> Value<'a> {
 
     pub fn as_u32(self) -> u32 {
         let num = self.as_f64();
-        assert!(num > 0.0);
+        assert!(num >= 0.0);
         num as u32
     }
 

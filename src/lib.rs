@@ -77,7 +77,7 @@ pub fn parse_str<'me>(arena: &'me Arena, str: &'me str) -> Result<HashMap<&'me s
                     return Err(Error::UnfinishedKey(reader.offset()))
                 }
 
-                let key = str::from_utf8(key.0).unwrap();
+                let key = str::from_utf8(&key.0[..key.0.len()-1]).unwrap();
                 let val = value(arena, &mut reader)?;
 
                 pairs.insert(key, val);

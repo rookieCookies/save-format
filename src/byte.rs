@@ -20,6 +20,11 @@ impl ByteWriter {
     }
 
 
+    pub fn finish(self) -> Vec<u8> {
+        self.buffer
+    }
+
+
     pub fn write_i8(&mut self, value: i8) {
         self.buffer.push(value.to_le_bytes()[0]);
     }

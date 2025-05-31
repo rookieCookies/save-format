@@ -3,7 +3,9 @@ pub mod byte;
 use std::{collections::HashMap, fmt::Write};
 
 use glam::{Vec2, Vec3};
-use sti::{arena::Arena, reader::Reader};
+use sti::reader::Reader;
+
+pub use sti::arena::Arena;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Value<'a> {

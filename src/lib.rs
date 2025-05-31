@@ -172,11 +172,7 @@ fn value<'me>(arena: &'me Arena, reader: &mut Reader<'me, u8>) -> Result<Value<'
             let mut nums = sti::vec::Vec::new_in(arena);
             while reader.peek().is_some() && reader.peek() != Some(b'\n') {
                 let num = number(reader);
-                if nums.is_empty() && chr == b'-' {
-                    nums.push(-num);
-                } else {
-                    nums.push(num);
-                }
+                nums.push(num);
             }
 
             match nums.len() {

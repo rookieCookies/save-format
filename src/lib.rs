@@ -11,14 +11,14 @@ pub use sti::arena::Arena;
 pub enum Value<'a> {
     String(&'a str),
 
-    Num(f32),
+    Num(f64),
     Bool(bool),
 
     Vec2(Vec2),
 
     Vec3(Vec3),
 
-    Vec(&'a [f32]),
+    Vec(&'a [f64]),
 
     None,
 }
@@ -39,10 +39,20 @@ impl<'a> Value<'a> {
         val
     }
 
-    pub fn as_num(self) -> f32 {
+    pub fn as_f64(self) -> f64 {
         let Value::Num(val) = self
         else { unreachable!() };
         val
+    }
+
+    pub fn as_f32(self) -> f32 {
+        self.as_f64() as f32
+    }
+
+    pub fn as_u32(self) -> u32 {
+        let num = self.as_f64();
+        assert!(num > 0.0);
+        num as u32
     }
 
     pub fn as_vec2(self) -> Vec2 {
@@ -57,7 +67,7 @@ impl<'a> Value<'a> {
         val
     }
 
-    pub fn as_vec(self) -> &'a [f32] {
+    pub fn as_vec(self) -> &'a [f64] {
         let Value::Vec(val) = self
         else { unreachable!() };
         val
@@ -172,8 +182,8 @@ fn value<'me>(arena: &'me Arena, reader: &mut Reader<'me, u8>) -> Result<Value<'
             match nums.len() {
                 0 => unreachable!(),
                 1 => Value::Num(nums[0]),
-                2 => Value::Vec2(Vec2::new(nums[0], nums[1])),
-                3 => Value::Vec3(Vec3::new(nums[0], nums[1], nums[2])),
+                2 => Value::Vec2(Vec2::new(nums[0] as f32, nums[1] as f32)),
+                3 => Value::Vec3(Vec3::new(nums[0] as f32, nums[1] as f32, nums[2] as f32)),
                 _ => Value::Vec(nums.leak()),
             }
         }
@@ -225,14 +235,14 @@ fn value<'me>(arena: &'me Arena, reader: &mut Reader<'me, u8>) -> Result<Value<'
 }
 
 
-fn number<'me>(reader: &mut Reader<u8>) -> f32 {
+fn number<'me>(reader: &mut Reader<u8>) -> f64 {
     let is_neg = if reader.peek() == Some(b'-') {
         let _ = reader.next();
         true
     } else { false };
     let (num, _) = reader.consume_while_slice(|&c| (c as char).is_numeric() || c == b'.');
     let num = str::from_utf8(num).unwrap();
-    let num : f32 = num.parse().unwrap();
+    let num : f64 = num.parse().unwrap();
     reader.next_if(|&f| f == b' ');
 
     if is_neg { -num }

@@ -158,7 +158,7 @@ fn value<'me>(arena: &'me Arena, reader: &mut Reader<'me, u8>) -> Result<Value<'
 
 
     Ok(match chr as char {
-        '0'..='9' => {
+        '-' | '0'..='9' => {
             let mut nums = sti::vec::Vec::new_in(arena);
             while reader.peek().is_some() && reader.peek() != Some(b'\n') {
                 let num = number(reader);
@@ -213,12 +213,17 @@ fn value<'me>(arena: &'me Arena, reader: &mut Reader<'me, u8>) -> Result<Value<'
 
 
 fn number<'me>(reader: &mut Reader<u8>) -> f32 {
+    let is_neg = if reader.peek() == Some(b'-') {
+        let _ = reader.next();
+        true
+    } else { false };
     let (num, _) = reader.consume_while_slice(|&c| (c as char).is_numeric() || c == b'.');
     let num = str::from_utf8(num).unwrap();
     dbg!(&reader, num);
     let num : f32 = num.parse().unwrap();
     reader.next_if(|&f| f == b' ');
 
-    num
+    if is_neg { -num }
+    else { num }
 }
 

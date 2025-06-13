@@ -70,6 +70,10 @@ impl ByteWriter {
 
         self.buffer.extend(bytes);
     }
+
+    pub fn write<const N: usize>(&mut self, bytes: [u8; N]) {
+        self.buffer.extend(bytes);
+    }
 }
 
 
@@ -130,6 +134,11 @@ impl<'me> ByteReader<'me> {
         Some(self.read_u8()? == 1)
     }
 
+    pub fn read<const N: usize>(&mut self) -> Option<[u8; N]> {
+        self.reader.next_array()
+    }
+
+
     pub fn read_bytes(&mut self) -> Option<&'me [u8]> {
         let len = self.read_u32()?;
         self.reader.next_n(len as usize)
@@ -138,4 +147,5 @@ impl<'me> ByteReader<'me> {
     pub fn read_str(&mut self) -> Option<&'me str> {
         Some(str::from_utf8(self.read_bytes()?).unwrap())
     }
+
 }

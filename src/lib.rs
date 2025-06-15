@@ -191,7 +191,6 @@ fn value<'me>(arena: &'me Arena, reader: &mut Reader<'me, u8>) -> Result<Value<'
             if reader.next() != Some(b'"') {
                 return Err(Error::UnfinishedKey(reader.offset()))
             }
-            dbg!(str);
 
             Value::String(str::from_utf8(str.0).unwrap())
 
